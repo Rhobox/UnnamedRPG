@@ -63,6 +63,8 @@ function initialize_triggers()
     damagetriggers_initialization()
     kill_selected_unit()
     setup_spawning()
+    level_test_hero()
+    SpawnTestHero()
 end
 
 function round(number, scale)
@@ -72,3 +74,7 @@ function round(number, scale)
     return rounded_number
 end
 if Debug then Debug.endFile() end
+
+function SpawnTestHero()
+    TestHero = CreateUnitAtLoc(Player(0), FourCC('Hblm'), GetRectCenter(GetPlayableMapRect()), 0)
+end

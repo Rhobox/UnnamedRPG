@@ -1,7 +1,7 @@
 if Debug then Debug.beginFile "PostInitialization" end
 function post_initialization()
     Filename = "TestSaveFile"
-    Filepath = "AODRemakeTest/" .. GetPlayerName(GetLocalPlayer()) .. "/"
+    Filepath = "RPGTestMap/" .. GetPlayerName(GetLocalPlayer()) .. "/"
     TestCount = 0
     spell_init()
 end
