@@ -1996,8 +1996,7 @@ this creep, and we can all go home?!
 - Order in this court!
 - You're all thinking it!
   
-Order! Order, I say!]]
-  --[[
+Order! Order, I say!
 - Say it!
 - Mr. Liotta, please sit down!
   
@@ -2498,7 +2497,7 @@ bee-negative nicknames...
   
 But it's just a prance-about stage name!
   
-...unnecessary inclusion of honey
+...unnecessary inclusion of honey ]]--[[
 in bogus health products
   
 and la-dee-da human

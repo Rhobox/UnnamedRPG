@@ -35,6 +35,7 @@ OnInit("FileIO", function()
     local SYNC_PREFIX = "S_TIO"  -- From ScrewTheTrees
     local SYNC_SUFFIX = "S_TIOP" -- Changed S_TIOF to S_TIOP because it almost spells STOP
     local chunkSize = 180 -- Random value taken from ScrewTheTrees, satisfies the "must be shorter than Blizzards magic number" requirement
+    local maxChunks = 315 -- From testing, loading 401 chunks reliably causes desync, but 308 seems to have no problems.
 
     ---@param filename string
     ---@param filepath string
@@ -45,29 +46,34 @@ OnInit("FileIO", function()
         local assembledChunk = ""
         local totalChunks = math.ceil(#toCompile / chunkSize)
         local header
-        PreloadGenClear()
-        PreloadGenStart()
 
-        DisplayTimedTextToPlayer(GetLocalPlayer(), 0, 0, 1, "Preparing to save...")
-        Preload('")\nendfunction\n//!beginusercode\n--[[')
+        if (totalChunks > maxChunks) then
+            DisplayTimedTextToPlayer(GetLocalPlayer(), 0, 0, 1, "Failed to save. File exceeds maximum safe size.")
+        else
+            PreloadGenClear()
+            PreloadGenStart()
 
-        for i = 1, #toCompile, 1 do
-            assembledChunk = assembledChunk .. toCompile:sub(i, i)
-            if (#assembledChunk >= chunkSize) then
-                header = string.format('%%04X', tostring(totalChunks)) .. string.format('%%04X', tostring(math.ceil(i / chunkSize)))
-                Preload(RAW_OPEN .. 'BlzSendSyncData("' .. SYNC_PREFIX .. '","' .. header .. assembledChunk ..'")\n' .. RAW_CLOSE)
-                assembledChunk = ""
-                header = ""
+            DisplayTimedTextToPlayer(GetLocalPlayer(), 0, 0, 1, "Preparing to save...")
+            Preload('")\nendfunction\n//!beginusercode\n--[[')
+
+            for i = 1, #toCompile, 1 do
+                assembledChunk = assembledChunk .. toCompile:sub(i, i)
+                if (#assembledChunk >= chunkSize) then
+                    header = string.format('%%04X', tostring(totalChunks)) .. string.format('%%04X', tostring(math.ceil(i / chunkSize)))
+                    Preload(RAW_OPEN .. 'BlzSendSyncData("' .. SYNC_PREFIX .. '","' .. header .. assembledChunk ..'")\n' .. RAW_CLOSE)
+                    assembledChunk = ""
+                    header = ""
+                end
             end
+            if (#assembledChunk > 0) then
+                header = string.format('%%04X', tostring(totalChunks)) .. string.format('%%04X', tostring(totalChunks))
+                Preload(RAW_OPEN .. 'BlzSendSyncData("'..SYNC_PREFIX..'", "'..header..assembledChunk .. '")\n' .. RAW_CLOSE)
+            end
+            Preload(']]\n//!endusercode\nfunction a takes nothing returns nothing\n//')
+            PreloadGenEnd(name)
+            PreloadGenEnd(filepath .. "Backups/" .. filename .. '_' .. tostring(os.time()) .. '.pld')
+            DisplayTimedTextToPlayer(GetLocalPlayer(), 0, 0, 1, "Saved successfully.")
         end
-        if (#assembledChunk > 0) then
-            header = string.format('%%04X', tostring(totalChunks)) .. string.format('%%04X', tostring(totalChunks))
-            Preload(RAW_OPEN .. 'BlzSendSyncData("'..SYNC_PREFIX..'", "'..header..assembledChunk .. '")\n' .. RAW_CLOSE)
-        end
-        Preload(']]\n//!endusercode\nfunction a takes nothing returns nothing\n//')
-        PreloadGenEnd(name)
-        PreloadGenEnd(filepath .. "Backups/" .. filename .. '_' .. tostring(os.time()) .. '.pld')
-        DisplayTimedTextToPlayer(GetLocalPlayer(), 0, 0, 1, "Saved successfully.")
     end
 
     ---@param filename string
