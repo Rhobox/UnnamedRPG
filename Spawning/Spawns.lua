@@ -1,3 +1,4 @@
+if Debug then Debug.beginFile "Spawning" end
 function setup_spawning()
     init_spawning_triggers()
 end
@@ -13,190 +14,320 @@ function init_spawning_trigger()
 end
 
 function spawning_trigger_action()
-    spawn_unit(
-        GetRectCenter(GetPlayableMapRect()),
-        nil,
-        nil,
-        0,
-        math.random(100, 1000),
-        math.random(10, 100),
-        math.random(10, 150),
-        math.random(0, 100),
-        math.random(0, 100),
-        math.random(0, 100),
-        math.random(0, 100),
-        math.random(0, 100),
-        math.random(150, 300),
-        math.random(0, 75),
-        math.random(0, 100),
-        math.random(1,2),
-        math.random(0.25, 0.75),
-        "hfoo",
-        math.random(0, 4),
-        0
-    )
+    local unit = {} ---@type unitStats
+    unit.location = GetRectCenter(GetPlayableMapRect())
+    unit.name = 'Steven the Test Unit'
+    unit.life = math.random(100, 1000)
+    unit.mana =  math.random(10, 100)
+    unit.damage = math.random(10, 150)
+    unit.attackSpeed = (math.random(5, 100) / 100)
+    unit.armor = math.random(0, 100)
+    unit.block = math.random(0, 20)
+
+    UnitHandle = SpawnUnit(unit)
 end
 
-function spawn_unit
-    (
-        location,
-        skin,
-        name,
-        num_abilities,
-        life,
-        mana,
-        damage,
-        armour,
-        block,
-        magic_armour,
-        magic_block,
-        bounty,
-        move_speed,
-        evasion,
-        crit_chance,
-        crit_mean,
-        crit_variance,
-        unit_code,
-        player,
-        angle
-    )
-    local created_unit = nil
+---@class unitStats
+---@field location location
+---@field skin? integer
+---@field name? string
+---@field possibleAbilities? table
+---@field numAbilities? integer
+---@field life? number
+---@field lifeRegen? number
+---@field mana? number
+---@field manaRegen? number
+---@field damage? number
+---@field attackSpeed? number
+---@field armor? number
+---@field block? number
+---@field magicArmor? number
+---@field magicBlock? number
+---@field bounty? integer
+---@field moveSpeed? number
+---@field evasion? number
+---@field evasionCrit? number
+---@field evasionPartial? number
+---@field critChance? number
+---@field critMean? number
+---@field critVariance? number
+---@field unitCode string
+---@field player? player
+---@field angle? number
+
+
+---@param unitStats unitStats
+---@return unit
+function SpawnUnit(unitStats)
+    local location = unitStats.location or nil
+    local skin = unitStats.skin or nil
+    local name = unitStats.name or nil
+    local possibleAbilities = unitStats.possibleAbilities or {}
+    local numAbilities = unitStats.numAbilities or 0
+    local life = unitStats.life or nil
+    local lifeRegen = unitStats.lifeRegen or nil
+    local mana = unitStats.mana or nil
+    local manaRegen = unitStats.manaRegen or nil
+    local damage = unitStats.damage or nil
+    local attackSpeed = unitStats.attackSpeed or nil
+    local armor = unitStats.armor or nil
+    local block = unitStats.block or 0
+    local magicArmor = unitStats.magicArmor or 0
+    local magicBlock = unitStats.magicBlock or 0
+    local bounty = unitStats.bounty or nil
+    local moveSpeed = unitStats.moveSpeed or nil
+    local evasion = unitStats.evasion or 0
+    local evasionCrit = unitStats.evasionCrit or 0
+    local evasionPartial = unitStats.evasionPartial or 0
+    local critChance = unitStats.critChance or 0
+    local critMean = unitStats.critMean or 0
+    local critVariance = unitStats.critVariance or 0
+    local unitCode = unitStats.unitCode or "hfoo"
+    local player = unitStats.player or GetLocalPlayer()
+    local angle = unitStats.angle or bj_UNIT_FACING
+
+    local createdUnit = nil
     local ability = nil
     local abilities = {}
-
-    local location_spawn = location
-    local unit_to_spawn = unit_code or "h001"
-    local unit_angle = angle or bj_UNIT_FACING
-    local unit_player = Player(player) or Player(0)
-
-    -- takes player id, integer unitid, location whichLocation, real face returns unit
-    -- constant unitstate UNIT_STATE_LIFE                          = ConvertUnitState(0)
-    -- constant unitstate UNIT_STATE_MAX_LIFE                      = ConvertUnitState(1)
-    -- constant unitstate UNIT_STATE_MANA                          = ConvertUnitState(2)
-    -- constant unitstate UNIT_STATE_MAX_MANA                      = ConvertUnitState(3)
 
     if skin == nil then
         skin = math.random(1, #possible_skins)
     end
     if name == nil then
-        name = math.random(1, #possible_names)
+        name = possible_names[math.random(1, #possible_names)]
     end
 
-    if num_abilities > 0 then
-        for i = 1, num_abilities do
-            ability = math.random(1, #possible_abilities)
-            abilities[i] = ability
+    if numAbilities > 0 then
+        for i = 1, numAbilities do
+            ability = math.random(1, #possibleAbilities)
+            possibleAbilities[i] = ability
         end
     end
 
-    created_unit = CreateUnitAtLoc(unit_player, FourCC(unit_to_spawn), location_spawn, unit_angle)
+    createdUnit = UnitCreation(player, unitCode, location, angle)
 
-    set_unit_skin(created_unit, possible_skins[skin])
-    set_unit_name(created_unit, possible_names[name] .. tostring(spawn_count))
-    set_unit_life(created_unit, life)
-    set_unit_mana(created_unit, mana)
-    set_unit_damage(created_unit, damage)
-    set_unit_armour(created_unit, armour)
-    set_unit_bounty(created_unit, bounty, 0, 0)
-    set_unit_move_speed(created_unit, move_speed)
+    SetUnitSkin(createdUnit, possible_skins[skin])
+    SetUnitName(createdUnit, name .. '_' .. tostring(SpawnCount))
+    SetUnitLife(createdUnit, life)
+    SetUnitLifeRegen(createdUnit, lifeRegen)
+    SetUnitMana(createdUnit, mana)
+    SetUnitManaRegen(createdUnit, manaRegen)
+    SetUnitDamage(createdUnit, damage)
+    SetUnitAttackSpeed(createdUnit, attackSpeed)
+    SetUnitArmor(createdUnit, armor)
+    SetUnitBounty(createdUnit, bounty)
+    SetUnitMoveSpeed(createdUnit, moveSpeed)
+    SetUnitBlock(createdUnit, block)
+    SetUnitMagicBlock(createdUnit, magicBlock)
+    SetUnitMagicArmor(createdUnit, magicArmor)
+    SetUnitMagicBlock(createdUnit, block)
+    SetUnitEvasion(createdUnit, evasion)
+    SetUnitEvasionCrit(createdUnit, evasionCrit)
+    SetUnitEvasionPartial(createdUnit, evasionPartial)
+    SetUnitCritChance(createdUnit, critChance)
+    SetUnitCritMean(createdUnit, critMean)
+    SetUnitCritVariance(createdUnit, critVariance)
 
-    unit_stats[created_unit] = {}
-    unit_stats[created_unit].physical_block = block
-    unit_stats[created_unit].magic_armour = magic_armour
-    unit_stats[created_unit].magic_block = magic_block
-    unit_stats[created_unit].evasion = evasion
-    unit_stats[created_unit].evasion_crit = 0
-    unit_stats[created_unit].evasion_partial = 0
-    unit_stats[created_unit].crit_chance = crit_chance
-    unit_stats[created_unit].crit_mean = crit_mean
-    unit_stats[created_unit].crit_variance = crit_variance
+    SpawnCount = SpawnCount + 1
 
-    return created_unit
+    return createdUnit
 end
 
-function set_unit_skin(unit, skin)
+--- Spawns a unit and registers the unit handle on UnitStats table
+---@param player player Player for which to spawn unit
+---@param unitCode string FourCC code of unit to spawn
+---@param location location Location of unit spawn
+---@param angle number Angle for spawned unit to face
+function UnitCreation(player, unitCode, location, angle)
+    local unit = CreateUnitAtLoc(player, FourCC(unitCode), location, angle)
+    UnitStats[unit] = DefaultUnitStats
+    return unit
+end
+
+---@param unit unit
+---@param skin integer
+function SetUnitSkin(unit, skin)
+    if (skin == nil) then return end
     BlzSetUnitSkin(unit, skin)
 end
 
-function set_unit_name(unit, name)
+---@param unit unit
+---@param name string | nil
+function SetUnitName(unit, name)
+    if (name == nil) then return end
     BlzSetUnitName(unit, name)
 end
 
-function set_unit_max_life(unit, life)
+---@param unit unit
+---@param life number | nil
+function SetUnitMaxLife(unit, life)
+    if (life == nil) then return end
     BlzSetUnitMaxHP(unit, life)
 end
 
-function set_unit_current_life(unit, life)
+---@param unit unit
+---@param life number | nil
+function SetUnitCurrentLife(unit, life)
+    if (life == nil) then return end
     SetUnitState(unit, UNIT_STATE_LIFE, life)
 end
 
-function set_unit_life(unit, life)
-    set_unit_max_life(unit, life)
-    set_unit_current_life(unit, life)
+---@param unit unit
+---@param life number | nil
+function SetUnitLife(unit, life)
+    if (life ~= nil) then
+        SetUnitMaxLife(unit, life)
+        SetUnitCurrentLife(unit, life)
+    end
 end
 
-function set_unit_life_regen(unit, regen)
+---@param unit unit
+---@param regen number | nil
+function SetUnitLifeRegen(unit, regen)
+    if (regen == nil) then return end
     BlzSetUnitRealField(unit, UNIT_RF_HIT_POINTS_REGENERATION_RATE, regen)
 end
 
-function set_unit_max_mana(unit, mana)
+---@param unit unit
+---@param mana number | nil
+function SetUnitMaxMana(unit, mana)
+    if (mana == nil) then return end
     BlzSetUnitMaxMana(unit, mana)
 end
 
-function set_unit_current_mana(unit, mana)
+---@param unit unit
+---@param mana number | nil
+function SetUnitCurrentMana(unit, mana)
+    if (mana == nil) then return end
     SetUnitState(unit, UNIT_STATE_MANA, mana)
 end
 
-function set_unit_mana(unit, mana)
-    set_unit_max_mana(unit, mana)
-    set_unit_current_mana(unit, mana)
+---@param unit unit
+---@param mana number | nil
+function SetUnitMana(unit, mana)
+    if (mana == nil) then return end
+    SetUnitMaxMana(unit, mana)
+    SetUnitCurrentMana(unit, mana)
 end
 
-function set_unit_mana_regen(unit, regen)
+---@param unit unit
+---@param regen number | nil
+function SetUnitManaRegen(unit, regen)
+    if (regen == nil) then return end
     BlzSetUnitRealField(unit, UNIT_RF_MANA_REGENERATION, regen)
 end
 
-function set_unit_damage(unit, damage, index)
+--- Sets unit damage, ignores dice
+---@param unit unit
+---@param damage number | nil
+---@param index? integer Defaults to 0
+function SetUnitDamage(unit, damage, index)
+    if (damage == nil) then return end
     local index = index or 0
     BlzSetUnitBaseDamage(unit, damage - 1, index)
     BlzSetUnitDiceNumber(unit, 1, index)
     BlzSetUnitDiceSides(unit, 1, index)
 end
 
-function set_unit_move_speed(unit, speed)
+--- Sets unit attack cooldown
+---@param unit unit
+---@param period number | nil
+---@param index? integer
+function SetUnitAttackSpeed(unit, period, index)
+    if (period == nil) then return end
+    local index = index or 0
+    BlzSetUnitAttackCooldown(unit, period, index)
+end
+
+---@param unit unit
+---@param speed number | nil
+function SetUnitMoveSpeed(unit, speed)
+    if (speed == nil) then return end
     SetUnitMoveSpeed(unit, speed)
 end
 
-function set_unit_armour(unit, armour)
-    BlzSetUnitArmor(unit, armour)
+---@param unit unit
+---@param armor number | nil
+function SetUnitArmor(unit, armor)
+    if (armor == nil) then return end
+    BlzSetUnitArmor(unit, armor)
 end
 
-function set_unit_physical_block(unit, block)
-    unit_stats[unit].physical_block = block
+---@param unit unit
+---@param block number | nil
+function SetUnitBlock(unit, block)
+    if (block == nil) then return end
+    UnitStats[unit].block = block
 end
 
-function set_unit_magical_armour(unit, magic_armour)
-    unit_stats[unit].magic_armour = magic_armour
+---@param unit unit
+---@param magicArmor number | nil
+function SetUnitMagicArmor(unit, magicArmor)
+    if (magicArmor == nil) then return end
+    UnitStats[unit].magicArmor = magicArmor
 end
 
-function set_unit_magic_block(unit, magic_block)
-    unit_stats[unit].magic_block = magic_block
+---@param unit unit
+---@param magicBlock number | nil
+function SetUnitMagicBlock(unit, magicBlock)
+    if (magicBlock == nil) then return end
+    UnitStats[unit].magicBlock = magicBlock
 end
 
-function set_unit_evasion(unit, evasion)
-    unit_stats[unit].evasion = evasion
+---@param unit unit
+---@param evasion number | nil
+function SetUnitEvasion(unit, evasion)
+    if (evasion == nil) then return end
+    UnitStats[unit].evasion = evasion
 end
 
-function set_unit_crit(unit, crit)
-    unit_stats[unit].crit = crit
+---@param unit unit
+---@param evasionCrit number | nil
+function SetUnitEvasionCrit(unit, evasionCrit)
+    if (evasionCrit == nil) then return end
+    UnitStats[unit].evasionCrit = evasionCrit
 end
 
-function set_unit_bounty(unit, bounty, dice, diceValue)
+---@param unit unit
+---@param evasionPartial number | nil
+function SetUnitEvasionPartial(unit, evasionPartial)
+    if (evasionPartial == nil) then return end
+    UnitStats[unit].evasionPartial = evasionPartial
+end
+
+---@param unit unit
+---@param critChance number | nil
+function SetUnitCritChance(unit, critChance)
+    if (critChance == nil) then return end
+    UnitStats[unit].critChance = critChance
+end
+
+---@param unit unit
+---@param critMean number | nil
+function SetUnitCritMean(unit, critMean)
+    if (critMean == nil) then return end
+    UnitStats[unit].critMean = critMean
+end
+
+---@param unit unit
+---@param critVariance number | nil
+function SetUnitCritVariance(unit, critVariance)
+    if (critVariance == nil) then return end
+    UnitStats[unit].critVariance = critVariance
+end
+
+--- Sets unit bounty value, dice and dice value
+---@param unit unit
+---@param bounty integer | nil
+function SetUnitBounty(unit, bounty)
+    if (bounty == nil) then return end
+    local value = bounty or 0
     local bountyDiceKey = UNIT_IF_GOLD_BOUNTY_AWARDED_NUMBER_OF_DICE
     local bountyValueKey = UNIT_IF_GOLD_BOUNTY_AWARDED_BASE
     local bountyDiceValueKey = UNIT_IF_GOLD_BOUNTY_AWARDED_SIDES_PER_DIE
 
-    BlzSetUnitIntegerField(unit, bountyValueKey, bounty)
-    BlzSetUnitIntegerField(unit, bountyDiceKey, dice)
-    BlzSetUnitIntegerField(unit, bountyDiceValueKey, diceValue)
+    BlzSetUnitIntegerField(unit, bountyValueKey, value)
+    BlzSetUnitIntegerField(unit, bountyDiceKey, 1)
+    BlzSetUnitIntegerField(unit, bountyDiceValueKey, 1)
 end
+if Debug then Debug.endFile() end

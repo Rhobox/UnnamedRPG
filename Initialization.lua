@@ -14,23 +14,9 @@ function initialize_variables()
     PlayerStats.TotalDeaths = 0
     PlayerStats.isAdmin = false
 
-    unit_stats = {}
-    unit_stats.physical_block = 0
-    unit_stats.magic_armour = 0
-    unit_stats.magic_block = 0
-    unit_stats.evasion = 0
-    unit_stats.evasion_crit = 0
-    unit_stats.evasion_partial = 0
-    unit_stats.crit_chance = 0
-    unit_stats.crit_mean = 0
-    unit_stats.crit_variance = 0.75
-    unit_stats.magic_crit_chance = 0
-    unit_stats.magic_crit_mean = 0
-    unit_stats.magic_crit_variance = 0.75
-
     gg_rct_Region_000 = Rect(-672.0, 96.0, -352.0, 384.0)
     gg_rct_Region_001 = Rect(224.0, 128.0, 512.0, 384.0)
-    spawn_count = 0
+    SpawnCount = 0
     possible_names = {}
     possible_names[1] = "Banana Lad"
     possible_names[2] = "Uber Zeit"

@@ -1,15 +1,16 @@
+if Debug then Debug.beginFile "BaseDamage" end
 function spell_damage(source, target, damage)
     local target_unit_type = GetUnitTypeId(udg_DamageEventTarget)
     local spell_resistance = nil
     local spell_block = nil
 
-    if unit_stats[target] == nil then
+    if UnitStats[target] == nil then
         spell_block = 0
         spell_resistance = 0
         if DebugDamage then print("Failed to find unit stats") end
     else
-        spell_resistance = unit_stats[target].magic_armour
-        spell_block = unit_stats[target].magic_block
+        spell_resistance = UnitStats[target].magicArmor
+        spell_block = UnitStats[target].magicBlock
     end
 
     if DebugDamage then print("Spell damage detected") end
@@ -50,11 +51,11 @@ function physical_damage(source, target, damage)
     local partial_evasion_factor = nil
     local partial_evasion_text_tag = nil
     if DebugDamage then print("Got armour " .. armour) end
-    if unit_stats[target] == nil then
+    if UnitStats[target] == nil then
         block = 0
         if DebugDamage then print("Failed to find unit stats")  end
     else
-        block = unit_stats[target].physical_block
+        block = UnitStats[target].block
     end
 
     if DebugDamage then print("Got block " .. block) end
@@ -108,9 +109,9 @@ function physical_damage(source, target, damage)
 end
 
 function calculate_criticals(source, damage)
-    local mean = unit_stats[source].crit_mean
-    local variance = unit_stats[source].crit_variance
-    local chance = unit_stats[source].crit_chance
+    local mean = UnitStats[source].critMean
+    local variance = UnitStats[source].critVariance
+    local chance = UnitStats[source].critChance
     local damage = damage
     local crit_damage = nil
     local success = false
@@ -128,9 +129,9 @@ function calculate_criticals(source, damage)
 end
 
 function calculate_magic_criticals(source, damage)
-    local mean = unit_stats[source].magic_crit_mean
-    local variance = unit_stats[source].magic_crit_variance
-    local chance = unit_stats[source].magic_crit_chance
+    local mean = UnitStats[source].magicCritMean
+    local variance = UnitStats[source].magicCritVariance
+    local chance = UnitStats[source].magicCritChance
     local damage = damage
     local crit_damage = nil
     local success = false
@@ -148,17 +149,17 @@ function calculate_magic_criticals(source, damage)
 end
 
 function calculate_evasion(target)
-    local chance = unit_stats[target].evasion
+    local chance = UnitStats[target].evasion
     return calculate_evasion_roll(chance) 
 end
 
 function calculate_crit_evasion(target)
-    local chance = unit_stats[target].evasion_crit
+    local chance = UnitStats[target].evasionCrit
     return calculate_evasion_roll(chance) 
 end
 
 function calculate_partial_evasion(target)
-    local chance = unit_stats[target].evasion_partial
+    local chance = UnitStats[target].evasionPartial
     local success = nil
     local mean = 0
     local variance = 0.3
@@ -193,3 +194,4 @@ end
 function gaussian (mean, variance)
     return  math.sqrt(-2 * variance * math.log(math.random())) * math.cos(2 * math.pi * math.random()) + mean
 end
+if Debug then Debug.endFile() end

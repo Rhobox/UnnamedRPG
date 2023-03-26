@@ -1,0 +1,203 @@
+if Debug then Debug.beginFile "PlayerState" end
+OnInit("PlayerState", function()
+    local internal = {}
+    PlayerState = { Internal = internal }
+    -- local playing = CreateForce()
+    -- local onLeaveEvents = {}
+    -- local playingInit = {}
+    -- local function onPlayerLeave(func)
+    --     onLeaveEvents[#onLeaveEvents + 1] = func
+    -- end
+
+    -- local function onPlayingInit(func)
+    --     if playingInit then
+    --         playingInit[#playingInit + 1] = func
+    --     else
+    --         ForForce(playing, function() func(GetEnumPlayer()) end)
+    --     end
+    -- end
+
+    -- local leave_trigger = CreateTrigger()
+    -- local function playerLeaved()
+    --     local p = GetTriggerPlayer()
+    --     for i = 1, #onLeaveEvents, 1 do
+    --         onLeaveEvents[i](p)
+    --     end
+    -- end
+
+    internal.SYNC_PREFIX = "P"
+    internal.SyncTrigger = CreateTrigger()
+
+    local playingCount = 0
+    -- TriggerAddAction(leave_trigger, playerLeaved)
+    for i = 0, bj_MAX_PLAYERS - 1 do
+        local p = Player(i)
+        local id = GetPlayerId(p)
+        --- BNet tag calculation
+        local name = GetPlayerName(p)
+        local bnetName, tag = name:match('([^#]+)#(%%d+)')
+        if bnetName then
+            bnetName = bnetName
+            tag = tonumber(tag)
+        else
+            bnetName = name
+            tag = 0
+        end
+        PlayerState[id] = {
+            name = bnetName,
+            bnetTag = tag
+        }
+        if GetPlayerController(p) == MAP_CONTROL_USER
+            and GetPlayerSlotState(p) == PLAYER_SLOT_STATE_PLAYING then
+            -- ForceAddPlayer(playing, p)
+            playingCount = playingCount + 1
+            -- TriggerRegisterPlayerEvent(leave_trigger, p, EVENT_PLAYER_LEAVE)
+            PlayerState[id].data = {
+                game_count = 1,
+                run_count = 0,
+            }
+        end
+        BlzTriggerRegisterPlayerSyncEvent(
+            PlayerState.Internal.SyncTrigger,
+            p,
+            PlayerState.Internal.SYNC_PREFIX,
+            false)
+        -- for i = 1, #playingInit, 1 do
+        --     playingInit[i](p)
+        -- end
+    end
+
+    PlayerState.Multiplayer = true--playingCount > 1
+    -- playingInit = nil
+    -- onPlayerLeave(function(p)
+    --     ForceRemovePlayer(playing, p)
+    --     playingCount = playingCount - 1
+    -- end)
+
+    -- local localId = GetPlayerId(GetLocalPlayer())
+    -- internal.SaveLocation = ([[roguelike/%%s/Save-%%d.pld]]):format(PlayerState[localId].name, PlayerState[localId].bnetTag)
+    internal.SaveLocation = "codeless-test.pld"
+    internal.saveInfo = {
+        key = Object64.Field.String.new('key', 6),
+        playerName = Object64.Field.String.new('player', 32),
+    }
+    internal.CURRENT_VERSION = 1
+    internal.MAP_KEY = "rG!B@n"
+    
+    TriggerAddAction(internal.SyncTrigger, function()
+        local p = GetTriggerPlayer()
+        local id = GetPlayerId(p)
+        local state = PlayerState[id]
+        local data = BlzGetTriggerSyncData()
+        print(("Received %%s <- %%s"):format(data, state.name))
+
+        local decoder = Base64.Decoder.create(data)
+        local version = decoder:readBitString(8)
+        local key = PlayerState.Internal.saveInfo.key:decode(decoder)
+        local playerName = PlayerState.Internal.saveInfo.playerName:decode(decoder)
+        local tag = decoder:readBitString(14)
+        
+        -- udg_souls_upg_steps[id + 1] = decoder:readBitString(8)
+        -- udg_souls_upg_heroes[id + 1] = decoder:readBitString(2)
+        SetHeroStr(udg_hero[id], decoder:readBitString(10), true)
+        SetHeroAgi(udg_hero[id], decoder:readBitString(10), true)
+        SetHeroInt(udg_hero[id], decoder:readBitString(10), true)
+        udg_kills[id] = decoder:readBitString(24)
+        state.data.game_count = decoder:readBitString(14) + 1
+        udg_deaths[id] = decoder:readBitString(24)
+        -- udg_souls_upg_gold[id + 1] = decoder:readBitString(8)
+        -- udg_souls_upg_xp[id + 1] = decoder:readBitString(8)
+        SetPlayerState(p, PLAYER_STATE_RESOURCE_GOLD, decoder:readBitString(24))
+        -- udg_souls_upg_mercDamage[id + 1] = decoder:readBitString(8)
+        -- udg_souls_upg_mercHP[id + 1] = decoder:readBitString(8)
+
+        print(("Welcome back to your %%dth game, %%s"):format(state.data.game_count, state.name))
+        if not PlayerState.Multiplayer then
+            print("You are playing in sigleplayer; your progress will not be saved.")
+        end
+        -- print(udg_souls_upg_heroes[id + 1] .. ' soul upgrades /st:' .. udg_status)
+        -- if udg_status == 1 then
+        --     for i = 1, udg_souls_upg_heroes[id + 1] do
+        --         print(udg_souls_upg_heroes[id + 1] .. ' ?')
+        --         GroupAddUnit(
+        --             udg_select_hero_souls,
+        --             CreateUnit(p, FourCC("ewsp"),
+        --                 GetRandomReal(GetRectMinX(gg_rct_selectHero2_Copy), GetRectMaxX(gg_rct_selectHero2_Copy)),
+        --                 GetRandomReal(GetRectMinY(gg_rct_selectHero2_Copy), GetRectMaxY(gg_rct_selectHero2_Copy)),
+        --                 bj_UNIT_FACING)
+        --         )
+        --     end
+        -- end
+        -- table.print(PlayerState[id])
+    end)
+
+    function PlayerState.Save()
+        if not PlayerState.Multiplayer then return end
+        --print('Saving player state')
+        local p = GetLocalPlayer()
+        local id = GetPlayerId(p)
+        local state = PlayerState[id]
+        local encoder = Base64.Encoder.create()
+        encoder:writeBitString(PlayerState.Internal.CURRENT_VERSION, 8)
+        PlayerState.Internal.saveInfo.key:encode(encoder, PlayerState.Internal.MAP_KEY)
+        PlayerState.Internal.saveInfo.playerName:encode(encoder, state.name)
+        encoder:writeBitString(state.bnetTag, 14)
+        -- encoder:writeBitString(udg_souls_upg_steps[id+1], 8)
+        -- encoder:writeBitString(udg_souls_upg_heroes[id + 1], 2)
+        encoder:writeBitString(GetHeroStr(udg_hero[id], false), 10)
+        encoder:writeBitString(GetHeroAgi(udg_hero[id], false), 10)
+        encoder:writeBitString(GetHeroInt(udg_hero[id], false), 10)
+        encoder:writeBitString(udg_kills[id], 24)
+        encoder:writeBitString(state.data.game_count, 14)
+        encoder:writeBitString(udg_deaths[id], 24)
+        -- encoder:writeBitString(udg_souls_upg_gold[id+1], 8)
+        -- encoder:writeBitString(udg_souls_upg_xp[id+1], 8)
+        encoder:writeBitString(GetPlayerState(p, PLAYER_STATE_RESOURCE_LUMBER), 24)
+        -- encoder:writeBitString(udg_souls_upg_mercDamage[id+1], 8)
+        -- encoder:writeBitString(udg_souls_upg_mercHP[id+1], 8)
+        local data = encoder:buildString()
+        FileIO.Save(PlayerState.Internal.SaveLocation, data)
+        --print("Your soul shall be remembered for ages...")
+        --print(("Saved %%s -> %%s"):format(data, PlayerState.Internal.SaveLocation))
+    end
+
+    function PlayerState.Load()
+        local p = GetLocalPlayer()
+        local id = GetPlayerId(p)
+        local state = PlayerState[id]
+        local data = FileIO.Load(PlayerState.Internal.SaveLocation)
+        print(("Read %%s <- %%s"):format(data, PlayerState.Internal.SaveLocation))
+        if not data then return end
+        local decoder = Base64.Decoder.create(data)
+        local version = decoder:readBitString(8)
+        if version > PlayerState.Internal.CURRENT_VERSION then
+            print('Bad savefile: was created on a newer version')
+            return
+        end
+        local key = PlayerState.Internal.saveInfo.key:decode(decoder)
+        if key ~= PlayerState.Internal.MAP_KEY then
+            print('Bad savefile: corrupted data (1)')
+            return
+        end
+        local playerName = PlayerState.Internal.saveInfo.playerName:decode(decoder)
+        if playerName ~= PlayerState[id].name then
+            print('Bad savefile: corrupted data (2)')
+            return
+        end
+        local tag = decoder:readBitString(14)
+        if tag ~= state.bnetTag then
+            print('Bad savefile: corrupted data (3)')
+            return
+        end
+        print('File is valid, syncing...')
+        BlzSendSyncData(PlayerState.Internal.SYNC_PREFIX, data)
+    end
+    
+    function PlayerState.OnNewRun()
+        -- ForForce(playing, function()
+        --     local data = pState[GetPlayerId(GetEnumPlayer())].data
+        --     data.run_count = data.run_count + 1
+        -- end)
+    end
+end)
+if Debug then Debug.endFile() end
