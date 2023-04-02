@@ -1,4 +1,4 @@
-if Debug then Debug.beginFile "FileIO" end
+if Debug then Debug.beginFile "UnitStats" end
 OnInit("UnitStats", function()
     ---@class UnitStats
     ---@field physicalBlock number
