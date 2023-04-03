@@ -38,7 +38,7 @@ OnInit.final("MagicalStatsPage", function()
             local stats = UnitStats[unit] ---@Type UnitStats
             local baseDamage = stats.magicAutoAttackDamage
             local unitArmor = stats.magicArmor
-            local armorReduction = (unitArmor * DefenseArmorConstant)/(1 + DefenseArmorConstant * unitArmor)
+            local armorReduction = (unitArmor * DefenseArmorConstant)/(1 + DefenseArmorConstant * unitArmor) * 100
             
             local heroStrengthTotal = BlzGetUnitIntegerField(unit, UNIT_IF_STRENGTH_WITH_BONUS)
             local heroStrengthBase = BlzGetUnitIntegerField(unit, UNIT_IF_STRENGTH_PERMANENT)
@@ -53,9 +53,11 @@ OnInit.final("MagicalStatsPage", function()
             local heroIntelligenceBonus = heroIntelligenceTotal - heroIntelligenceBase
 
             local maxMana = BlzGetUnitMaxMana(unit)
-            local manaRegen = BlzGetUnitRealField(unit, UNIT_RF_MANA_REGENERATION) + heroIntelligenceTotal * IntRegenBonus
+            local manaRegenInt = heroIntelligenceTotal * IntRegenBonus
+            local manaRegenUnit = BlzGetUnitRealField(unit, UNIT_RF_MANA_REGENERATION)
+            local manaRegenTotal = manaRegenUnit + manaRegenInt
 
-            local armorString = string.format("%%.0f\nReduction: %%.1f", unitArmor, armorReduction) .. "%%"
+            local armorString = string.format("%%.0f\nReduction: %%.3f", unitArmor, armorReduction) .. "%%"
 
             tooltipInfo[context][unit] = {
                 string.format("%%i", baseDamage),
@@ -68,7 +70,7 @@ OnInit.final("MagicalStatsPage", function()
                 string.format("Total: %%i\nBase: %%i\nBonus: %%i", heroIntelligenceTotal, heroIntelligenceBase, heroIntelligenceBonus),
                 string.format("Chance: %%.1f\nCrit: %%.1f\nPartial: %%.1f", stats.evasion, stats.evasionCrit, stats.evasionPartial),
                 string.format( "%%i", maxMana),
-                string.format( "%%.3f", manaRegen)
+                string.format( "Total: %%.3f\nUnit: %%.3f\nInt: %%.3f", manaRegenTotal, manaRegenUnit, manaRegenInt)
             }
 
             -- BlzFrameGetText(BlzGetFrameByName("InfoPanelIconValue", 0)) is for the frame that has attack damage
@@ -84,7 +86,7 @@ OnInit.final("MagicalStatsPage", function()
             BlzFrameSetText(frameObject[8].Text, string.format("%%i", heroIntelligenceTotal))
             BlzFrameSetText(frameObject[9].Text, string.format("%%.1f", stats.evasion))
             BlzFrameSetText(frameObject[10].Text, string.format( "%%i", maxMana))
-            BlzFrameSetText(frameObject[11].Text, string.format( "%%.1f", manaRegen))
+            BlzFrameSetText(frameObject[11].Text, string.format( "%%.1f", manaRegenTotal))
             BlzFrameSetText(frameObject[12].Text, string.format( "%%.1f", maxMana))
         end,
         function(unit) return IsUnitType(unit, UNIT_TYPE_HERO) end)

@@ -38,7 +38,7 @@ OnInit.final("PhysicalStatsPage", function()
 
             local baseDamage = BlzGetUnitBaseDamage(unit, 0)
             local unitArmor = BlzGetUnitArmor(unit)
-            local armorReduction = (unitArmor * DefenseArmorConstant)/(1 + DefenseArmorConstant * unitArmor)
+            local armorReduction = (unitArmor * DefenseArmorConstant)/(1 + DefenseArmorConstant * unitArmor) * 100
             local stats = UnitStats[unit] ---@Type UnitStats
             local heroStrengthTotal = BlzGetUnitIntegerField(unit, UNIT_IF_STRENGTH_WITH_BONUS)
             local heroStrengthBase = BlzGetUnitIntegerField(unit, UNIT_IF_STRENGTH_PERMANENT)
@@ -53,9 +53,11 @@ OnInit.final("PhysicalStatsPage", function()
             local heroIntelligenceBonus = heroIntelligenceTotal - heroIntelligenceBase
 
             local maxHealth = BlzGetUnitMaxHP(unit)
-            local healthRegen = BlzGetUnitRealField(unit, UNIT_RF_HIT_POINTS_REGENERATION_RATE) + heroStrengthTotal * StrRegenBonus
+            local healthRegenStr = heroStrengthTotal * StrRegenBonus
+            local healthRegenUnit = BlzGetUnitRealField(unit, UNIT_RF_HIT_POINTS_REGENERATION_RATE)
+            local healthRegenTotal = healthRegenUnit + healthRegenStr
 
-            local armorString = string.format("%%.0f\nReduction: %%.1f", unitArmor, armorReduction) .. "%%"
+            local armorString = string.format("%%.0f\nReduction: %%.3f", unitArmor, armorReduction) .. "%%"
 
             tooltipInfo[context][unit] = {
                 string.format("%%i", baseDamage),
@@ -68,7 +70,7 @@ OnInit.final("PhysicalStatsPage", function()
                 string.format("Total: %%i\nBase: %%i\nBonus: %%i", heroIntelligenceTotal, heroIntelligenceBase, heroIntelligenceBonus),
                 string.format("Chance: %%.1f\nCrit: %%.1f\nPartial: %%.1f", stats.evasion, stats.evasionCrit, stats.evasionPartial),
                 string.format( "%%i", maxHealth),
-                string.format( "%%.3f", healthRegen)
+                string.format( "Total: %%.3f\nUnit: %%.3f\nStr: %%.3f", healthRegenTotal, healthRegenUnit, healthRegenStr)
             }
 
             -- BlzFrameGetText(BlzGetFrameByName("InfoPanelIconValue", 0)) is for the frame that has attack damage
@@ -84,7 +86,7 @@ OnInit.final("PhysicalStatsPage", function()
             BlzFrameSetText(frameObject[8].Text, string.format("%%i", heroIntelligenceTotal))
             BlzFrameSetText(frameObject[9].Text, string.format("%%.1f", stats.evasion))
             BlzFrameSetText(frameObject[10].Text, string.format( "%%.1f", maxHealth))
-            BlzFrameSetText(frameObject[11].Text, string.format( "%%.1f", healthRegen))
+            BlzFrameSetText(frameObject[11].Text, string.format( "%%.1f", healthRegenTotal))
             BlzFrameSetText(frameObject[12].Text, string.format( "%%.1f", maxHealth))
         end,
         function(unit) return IsUnitType(unit, UNIT_TYPE_HERO) end)
