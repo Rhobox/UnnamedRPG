@@ -1,6 +1,5 @@
 if Debug then Debug.beginFile "UnitInfoPanels" end
 OnInit.final("UnitInfoPanels", function() 
-    local realMarkGameStarted = MarkGameStarted
     local wantedIndex = 1
     local panels, panelsCondition, panelFrame, updates
     local tooltipListener, tooltipBox, tooltipText
@@ -15,6 +14,7 @@ OnInit.final("UnitInfoPanels", function()
         GroupEnumUnitsSelected(group, player, nil)
         UnitInfoPanelUnit = FirstOfGroup(group)
         GroupClear(group)
+        SelectedUnit = UnitInfoPanelUnit
         return UnitInfoPanelUnit
     end
 
@@ -123,6 +123,7 @@ OnInit.final("UnitInfoPanels", function()
     end
 
     function UnitInfoPanelSetPage(newPage, updateWanted)
+        print("Updating")
         if string.sub(tostring(newPage), 1, 12) == "framehandle:" then
             local found = false
             for i, v in ipairs(panels) do
@@ -178,6 +179,8 @@ OnInit.final("UnitInfoPanels", function()
         pageDown = BlzCreateSimpleFrame("UnitInfoSimpleIconButtonDown", unitInfo, 0)
         BlzFrameSetAbsPoint(pageUp, FRAMEPOINT_BOTTOMRIGHT, 0.51, 0.08)
 
+        BlzGetFrameByName("UnitInfoSimpleIconButtonUp", 0)
+
         if HAVE_BIG_PAGE_BUTTON then
             pageUpBig = BlzCreateSimpleFrame("EmptySimpleButton", unitInfo, 0)
             BlzFrameSetAllPoints(pageUpBig, unitInfo)
@@ -216,7 +219,7 @@ OnInit.final("UnitInfoPanels", function()
         BlzFrameSetPoint(tooltipBox, FRAMEPOINT_BOTTOMRIGHT, tooltipText, FRAMEPOINT_BOTTOMRIGHT, 0.005, -0.01)
         BlzFrameSetVisible(tooltipBox, false)
 
-        TimerStart(timer, 0.05, true, function()
+        TimerStart(timer, 0.2, true, function()
             xpcall(function()
                 local found = false
                 if BlzFrameIsVisible(unitInfo) then
@@ -224,41 +227,42 @@ OnInit.final("UnitInfoPanels", function()
 
                     for int = 1, #tooltipListener, 1 do
                         if BlzFrameIsVisible(tooltipListener[int]) then
-                        BlzFrameSetText(tooltipText, tooltipListener[tooltipListener[int]](UnitInfoPanelUnit))
-                        found = true
-                        break
+                            BlzFrameSetText(tooltipText, tooltipListener[tooltipListener[int]](UnitInfoPanelUnit))
+                            found = true
+                            break
                         end
                     end
 
-                local usablePages = 0
-                for i, v in ipairs(panels) do
-                    if not panels[v] or panels[v](UnitInfoPanelUnit) then
-                        usablePages = usablePages + 1
+                    local usablePages = 0
+                    for i, v in ipairs(panels) do
+                        if not panels[v] or panels[v](UnitInfoPanelUnit) then
+                            usablePages = usablePages + 1
+                        end
                     end
+
+                    local visiblePageChangeFrames = usablePages > 1
+                    BlzFrameSetVisible(pageUp, visiblePageChangeFrames)
+                    BlzFrameSetVisible(pageDown, visiblePageChangeFrames)
+
+                    ---@diagnostic disable-next-line: unused-function, redundant-parameter
+                    if wantedIndex ~= activeIndex and panelsCondition[wantedIndex](UnitInfoPanelUnit) then
+                        UnitInfoPanelSetPage(wantedIndex)
+                    end
+
+                    ---@diagnostic disable-next-line: unused-function, redundant-parameter
+                    if not panelsCondition[activeIndex](UnitInfoPanelUnit) then
+                        UnitInfoPanelSetPage("+")
+                    end
+
+                    if updates[activeIndex] then
+                        updates[activeIndex](UnitInfoPanelUnit) 
+                    end
+
+                    BlzFrameSetVisible(panelFrame[activeIndex], true)
+                else
+                    BlzFrameSetVisible(panelFrame[activeIndex], false)
                 end
-
-                local visiblePageChangeFrames = usablePages > 1
-                BlzFrameSetVisible(pageUp, visiblePageChangeFrames)
-                BlzFrameSetVisible(pageDown, visiblePageChangeFrames)
-
-                ---@diagnostic disable-next-line: unused-function, redundant-parameter
-                if wantedIndex ~= activeIndex and panelsCondition[wantedIndex](UnitInfoPanelUnit) then
-                    UnitInfoPanelSetPage(wantedIndex)
-                end
-
-                if not panelsCondition[activeIndex](UnitInfoPanelUnit) then
-                    UnitInfoPanelSetPage("+")
-                end
-
-                if updates[activeIndex] then 
-                    updates[activeIndex](UnitInfoPanelUnit) 
-                end
-
-                BlzFrameSetVisible(panelFrame[activeIndex], true)
-            else
-                BlzFrameSetVisible(panelFrame[activeIndex], false)
-            end
-            BlzFrameSetVisible(tooltipBox, found)
+                BlzFrameSetVisible(tooltipBox, found)
             end, print)
         end)
     end

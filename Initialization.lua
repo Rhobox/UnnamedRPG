@@ -59,8 +59,9 @@ function round(number, scale)
 
     return rounded_number
 end
-if Debug then Debug.endFile() end
 
 function SpawnTestHero()
-    TestHero = CreateUnitAtLoc(Player(0), FourCC('Hblm'), GetRectCenter(GetPlayableMapRect()), 0)
+    TestHero = UnitCreation(Player(0), 'Hblm', GetRectCenter(GetPlayableMapRect()), 0)
 end
+
+if Debug then Debug.endFile() end

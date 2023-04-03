@@ -1,5 +1,5 @@
-if Debug then Debug.beginFile "PhysicalStatsPage" end
-OnInit.final("PhysicalStatsPage", function()
+if Debug then Debug.beginFile "MagicalStatsPage" end
+OnInit.final("MagicalStatsPage", function()
     local parent, frameObject, buttonCount, Data, unit
     local index, frame, tooltip, trigger, iconFrame, textFrame
     local tooltipInfo = {}
@@ -14,7 +14,7 @@ OnInit.final("PhysicalStatsPage", function()
     local function Init()
         buttonCount = 12
         frameObject = {}
-        local context = 0
+        local context = 1
         tooltipInfo[context] = {}
         -- Frames need to be preloaded to ensure they're available for all players
         -- to avoid a desync
@@ -23,7 +23,7 @@ OnInit.final("PhysicalStatsPage", function()
         BlzGetFrameByName("InfoPanelIconHeroStrengthValue", 6)
         BlzGetFrameByName("InfoPanelIconHeroAgilityValue", 6)
         BlzGetFrameByName("InfoPanelIconHeroIntellectValue", 6)
-        
+
         parent = BlzCreateSimpleFrame(
             "CustomUnitInfoPanel3x4", 
             BlzGetFrameByName("SimpleInfoPanelUnitDetail", 0),
@@ -33,13 +33,13 @@ OnInit.final("PhysicalStatsPage", function()
         AddUnitInfoPanel(parent, function(unit)
             -- Gameplay constants
             local DefenseArmorConstant = 0.06 
-            local StrRegenBonus = 0.05
+            local IntRegenBonus = 0.05
             -- End of Gameplay Constants
-
-            local baseDamage = BlzGetUnitBaseDamage(unit, 0)
-            local unitArmor = BlzGetUnitArmor(unit)
-            local armorReduction = (unitArmor * DefenseArmorConstant)/(1 + DefenseArmorConstant * unitArmor)
             local stats = UnitStats[unit] ---@Type UnitStats
+            local baseDamage = stats.magicAutoAttackDamage
+            local unitArmor = stats.magicArmor
+            local armorReduction = (unitArmor * DefenseArmorConstant)/(1 + DefenseArmorConstant * unitArmor)
+            
             local heroStrengthTotal = BlzGetUnitIntegerField(unit, UNIT_IF_STRENGTH_WITH_BONUS)
             local heroStrengthBase = BlzGetUnitIntegerField(unit, UNIT_IF_STRENGTH_PERMANENT)
             local heroStrengthBonus = heroStrengthTotal - heroStrengthBase
@@ -52,23 +52,23 @@ OnInit.final("PhysicalStatsPage", function()
             local heroIntelligenceBase = BlzGetUnitIntegerField(unit, UNIT_IF_INTELLIGENCE_PERMANENT)
             local heroIntelligenceBonus = heroIntelligenceTotal - heroIntelligenceBase
 
-            local maxHealth = BlzGetUnitMaxHP(unit)
-            local healthRegen = BlzGetUnitRealField(unit, UNIT_RF_HIT_POINTS_REGENERATION_RATE) + heroStrengthTotal * StrRegenBonus
+            local maxMana = BlzGetUnitMaxMana(unit)
+            local manaRegen = BlzGetUnitRealField(unit, UNIT_RF_MANA_REGENERATION) + heroIntelligenceTotal * IntRegenBonus
 
             local armorString = string.format("%%.0f\nReduction: %%.1f", unitArmor, armorReduction) .. "%%"
 
             tooltipInfo[context][unit] = {
                 string.format("%%i", baseDamage),
                 armorString,
-                string.format("%%.0f", stats.physicalBlock),
-                string.format("Chance: %%.1f\nMean: %%.1f\nVariance: %%.1f", stats.critChance, stats.critMean, stats.critVariance),
+                string.format("%%.0f", stats.magicBlock),
+                string.format("Chance: %%.1f\nMean: %%.1f\nVariance: %%.1f", stats.magicCritChance, stats.magicCritMean, stats.magicCritVariance),
                 string.format( "%%.0f",GetUnitMoveSpeed(unit)),
                 string.format("Total: |cffAA0000%%i|r\nBase: |cff161cc9%%i|r\nBonus: |cff16c91c%%i|r", heroStrengthTotal, heroStrengthBase, heroStrengthBonus),
                 string.format("Total: %%i\nBase: %%i\nBonus: %%i", heroAgilityTotal, heroAgilityBase, heroAgilityBonus),
                 string.format("Total: %%i\nBase: %%i\nBonus: %%i", heroIntelligenceTotal, heroIntelligenceBase, heroIntelligenceBonus),
                 string.format("Chance: %%.1f\nCrit: %%.1f\nPartial: %%.1f", stats.evasion, stats.evasionCrit, stats.evasionPartial),
-                string.format( "%%i", maxHealth),
-                string.format( "%%.3f", healthRegen)
+                string.format( "%%i", maxMana),
+                string.format( "%%.3f", manaRegen)
             }
 
             -- BlzFrameGetText(BlzGetFrameByName("InfoPanelIconValue", 0)) is for the frame that has attack damage
@@ -76,16 +76,16 @@ OnInit.final("PhysicalStatsPage", function()
             -- BlzGetFrameByName("InfoPanelIconHeroStrengthValue", 6) is for strength
             BlzFrameSetText(frameObject[1].Text, string.format("%%i", baseDamage))
             BlzFrameSetText(frameObject[2].Text, string.format("%%.0f", unitArmor))
-            BlzFrameSetText(frameObject[3].Text, string.format("%%.0f", stats.physicalBlock))
-            BlzFrameSetText(frameObject[4].Text, string.format("%%.1f", stats.critChance))
+            BlzFrameSetText(frameObject[3].Text, string.format("%%.0f", stats.magicBlock))
+            BlzFrameSetText(frameObject[4].Text, string.format("%%.1f", stats.magicCritChance))
             BlzFrameSetText(frameObject[5].Text, string.format( "%%.0f",GetUnitMoveSpeed(unit)))
             BlzFrameSetText(frameObject[6].Text, string.format("%%i", heroStrengthTotal))
             BlzFrameSetText(frameObject[7].Text, string.format("%%i", heroAgilityTotal))
             BlzFrameSetText(frameObject[8].Text, string.format("%%i", heroIntelligenceTotal))
             BlzFrameSetText(frameObject[9].Text, string.format("%%.1f", stats.evasion))
-            BlzFrameSetText(frameObject[10].Text, string.format( "%%.1f", maxHealth))
-            BlzFrameSetText(frameObject[11].Text, string.format( "%%.1f", healthRegen))
-            BlzFrameSetText(frameObject[12].Text, string.format( "%%.1f", maxHealth))
+            BlzFrameSetText(frameObject[10].Text, string.format( "%%i", maxMana))
+            BlzFrameSetText(frameObject[11].Text, string.format( "%%.1f", manaRegen))
+            BlzFrameSetText(frameObject[12].Text, string.format( "%%.1f", maxMana))
         end,
         function(unit) return IsUnitType(unit, UNIT_TYPE_HERO) end)
 
@@ -104,22 +104,22 @@ OnInit.final("PhysicalStatsPage", function()
             frameObject[int] = { Index = int, Icon = iconFrame, Text = textFrame, Button = frame, ToolTip = tooltip}
             frameObject[frame] = frameObject[int]
         end
-        BlzFrameSetVisible(BlzGetFrameByName("CustomUnitInfoButton12", 0), false)
+        BlzFrameSetVisible(BlzGetFrameByName("CustomUnitInfoButton12", context), false)
 
     end
 
     Data = {
-        {"Damage: ", "ReplaceableTextures\\CommandButtons\\BTNSteelMelee", "Basic attack physical damage."},
-        {"Armor: ", "ReplaceableTextures\\CommandButtons\\BTNHumanArmorUpOne", "Reduces physical damage by a percentage."},
-        {"Block: ", "ReplaceableTextures\\CommandButtons\\BTNThickFur", "Reduces physical damage by the specified amount."},
-        {"Crit: ", "ReplaceableTextures\\CommandButtons\\BTNCriticalStrike","Crit chance, mean and variance for a gaussian distribution."},
+        {"Damage: ", "ReplaceableTextures\\CommandButtons\\BTNFlare", "Basic attack magical damage."},
+        {"Armor: ", "ReplaceableTextures\\CommandButtons\\BTNHumanArmorUpOne", "Reduces magical damage by a percentage."},
+        {"Block: ", "ReplaceableTextures\\CommandButtons\\BTNThickFur", "Reduces magical damage by the specified amount."},
+        {"Crit: ", "ReplaceableTextures\\CommandButtons\\BTNCriticalStrike","Magic crit chance, mean and variance for a gaussian distribution."},
         {"Speed: ", "ReplaceableTextures\\CommandButtons\\BTNBootsOfSpeed", "Current move speed."},
         {"Str: ", "ReplaceableTextures\\CommandButtons\\BTNGauntletsOfOgrePower", "Increases life and life regeneration."},
-        {"Agi: ", "ReplaceableTextures\\CommandButtons\\BTNSlippersOfAgility", "Increases armor and attack speed."},
+        {"Agi:: ", "ReplaceableTextures\\CommandButtons\\BTNSlippersOfAgility", "Increases armor and attack speed."},
         {"Int: ", "ReplaceableTextures\\CommandButtons\\BTNMantleOfIntelligence", "Increases mana and mana regeneration."},
         {"Evasion: ", "ReplaceableTextures\\CommandButtons\\BTNEvasion", "Evasion for normal attacks, critical hits and partial avoidance."},
-        {"HP: ", "ReplaceableTextures\\CommandButtons\\BTNStatUp","Max hitpoints."},
-        {"HP/s: ", "ReplaceableTextures\\CommandButtons\\BTNRegenerate","Hitpoint regeneration per second."},
+        {"MP: ", "ReplaceableTextures\\CommandButtons\\BTNStatUp","Max mana."},
+        {"MP/s: ", "ReplaceableTextures\\CommandButtons\\BTNRegenerate","Mana regeneration per second."},
         {"Ausweichen: ", "ReplaceableTextures\\CommandButtons\\BTNEvasion",""}
     }
 

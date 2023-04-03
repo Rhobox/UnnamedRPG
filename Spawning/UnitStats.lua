@@ -1,6 +1,7 @@
 if Debug then Debug.beginFile "UnitStats" end
 OnInit("UnitStats", function()
     ---@class UnitStats
+    ---@field magicAutoAttackDamage integer
     ---@field physicalBlock number
     ---@field magicArmor number
     ---@field magicBlock number
@@ -18,6 +19,7 @@ OnInit("UnitStats", function()
     UnitStats = {}
 
     DefaultUnitStats = {
+        magicAutoAttackDamage = 0,
         physicalBlock = 0,
         magicArmor = 0,
         magicBlock = 0,
