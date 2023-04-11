@@ -1,11 +1,16 @@
-if Debug then Debug.beginFile "Initialization" end
-function init()
-    initialize_variables()
-    initialize_triggers()
-    TimerStart(CreateTimer(), 0.03, false, post_initialization())
-end
+if Debug then Debug.beginFile "InitializationDebug" end
+OnInit.final("Initialization", function()
+    local testing = true
+    function round(number, scale)
+        return math.floor((number * scale) + 0.5) / scale
+    end
 
-function initialize_variables()
+    -- Gameplay Constants, not available programmatically?
+    DefenseArmorConstant = 0.06 
+    StrRegenBonus = 0.05
+    IntRegenBonus = 0.05
+    --
+
     DebugDamage = false
 
     PlayerStats = {}
@@ -39,9 +44,7 @@ function initialize_variables()
     possible_skins[14] = FourCC('earc')
     possible_skins[15] = FourCC('esen')
     possible_skins[16] = FourCC('edry')
-end
-
-function initialize_triggers()
+    
     init_save_load_data_sync()
     init_save_and_load_command_triggers()
     spawn_footmen_at_the_click_of_a_button()
@@ -49,19 +52,15 @@ function initialize_triggers()
     damagetriggers_initialization()
     kill_selected_unit()
     setup_spawning()
-    level_test_hero()
-    SpawnTestHero()
-end
+    
 
-function round(number, scale)
+    TimerStart(CreateTimer(), 0.03, false, post_initialization())
 
-    local rounded_number = math.floor((number * scale) + 0.5) / scale
-
-    return rounded_number
-end
-
-function SpawnTestHero()
-    TestHero = UnitCreation(Player(0), 'Hblm', GetRectCenter(GetPlayableMapRect()), 0)
-end
-
+    if testing then
+        FogEnable(false)
+        FogMaskEnable(false)
+        TestHero = UnitCreation(Player(0), 'Hblm', GetRectCenter(GetPlayableMapRect()), 0)
+        level_test_hero()
+    end
+end)
 if Debug then Debug.endFile() end

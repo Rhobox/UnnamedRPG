@@ -1,10 +1,16 @@
 if Debug then Debug.beginFile "UnitStats" end
 OnInit("UnitStats", function()
     ---@class UnitStats
-    ---@field magicAutoAttackDamage integer
+    ---@field weaponCooldownModifier number
+    ---@field physicalAutoAttackDamageModifiers number
     ---@field physicalBlock number
+    ---@field physicalArmorPierce number
+    ---@field physicalBlockPierce number
+    ---@field magicAutoAttackDamage integer
     ---@field magicArmor number
     ---@field magicBlock number
+    ---@field magicArmorPierce number
+    ---@field magicBlockPierce number
     ---@field evasion number
     ---@field evasionCrit number
     ---@field evasionPartial number
@@ -19,19 +25,31 @@ OnInit("UnitStats", function()
     UnitStats = {}
 
     DefaultUnitStats = {
-        magicAutoAttackDamage = 0,
+        weaponCooldownModifier = 0,
+
+        physicalAutoAttackDamageModifiers = 0,
         physicalBlock = 0,
+        physicalArmorPierce = 0,
+        physicalBlockPierce = 0,
+
+        magicAutoAttackDamage = 0,
         magicArmor = 0,
         magicBlock = 0,
+        magicArmorPierce = 0,
+        magicBlockPierce = 0,
+
         evasion = 0,
         evasionCrit = 0,
         evasionPartial = 0,
+
         critChance = 0,
         critMean = 0,
         critVariance = 0.75,
+
         magicCritChance = 0,
         magicCritMean = 0,
         magicCritVariance = 0.75,
+
         revived = false,
         reviveTime = 2.5
     }

@@ -1,21 +1,13 @@
-if Debug then Debug.beginFile "PhysicalStatsPage" end
+if Debug then Debug.beginFile "PhysicalStatsPageDebug" end
 OnInit.final("PhysicalStatsPage", function()
-    local parent, frameObject, buttonCount, Data, unit
-    local index, frame, tooltip, trigger, iconFrame, textFrame
-    local tooltipInfo = {}
-
-    local function UnitInfoPanelTooltip(unit, int, context)
-        return CreateUnitInfoPanelTooltip(
-            Data[int][1],
-            tooltipInfo[context][unit][int] .. '\n\n' .. Data[int][3]
-        )
-    end
+    local maxButtons = 12
+    local parent, buttonCount
+    local frame, tooltip, trigger, iconFrame, textFrame
 
     local function Init()
-        buttonCount = 12
-        frameObject = {}
+        buttonCount = 11
+        local frameObject = {}
         local context = 0
-        tooltipInfo[context] = {}
         -- Frames need to be preloaded to ensure they're available for all players
         -- to avoid a desync
         BlzGetFrameByName("InfoPanelIconValue", 0)
@@ -30,52 +22,88 @@ OnInit.final("PhysicalStatsPage", function()
             context
         )
 
-        AddUnitInfoPanel(parent, function(unit)
-            -- Gameplay constants
-            local DefenseArmorConstant = 0.06 
-            local StrRegenBonus = 0.05
-            -- End of Gameplay Constants
+        -- Physical Stats --
+        -- Damage
+        -- Weapon Cooldown
+        -- Armor
+        -- Block
+        -- Crit
+        -- Evade
+        -- Armor Pierce
+        -- Block Pierce
 
+        local FrameButtonData = {
+            field = {
+                "Damage",
+                "Armor",
+                "Block",
+                "Crit",
+                "Speed",
+                "Strength",
+                "Agility",
+                "Intelligence",
+                "Evasion",
+                "Hitpoints",
+                "Hitpoint Regeneration"
+            },
+            texture = {
+               "ReplaceableTextures\\CommandButtons\\BTNSteelMelee",
+                "ReplaceableTextures\\CommandButtons\\BTNHumanArmorUpOne",
+                "ReplaceableTextures\\CommandButtons\\BTNThickFur",
+                "ReplaceableTextures\\CommandButtons\\BTNCriticalStrike",
+                "ReplaceableTextures\\CommandButtons\\BTNBootsOfSpeed",
+                "ReplaceableTextures\\CommandButtons\\BTNGauntletsOfOgrePower",
+                "ReplaceableTextures\\CommandButtons\\BTNSlippersOfAgility",
+                "ReplaceableTextures\\CommandButtons\\BTNMantleOfIntelligence",
+                "ReplaceableTextures\\CommandButtons\\BTNEvasion",
+                "ReplaceableTextures\\CommandButtons\\BTNStatUp",
+                "ReplaceableTextures\\CommandButtons\\BTNRegenerate",
+            },
+            description = {
+                "Basic attack physical damage.",
+                "Reduces physical damage by a percentage.",
+                "Reduces physical damage by the specified amount.",
+                "Crit chance, mean and variance for a gaussian distribution.",
+                "Current move speed.",
+                "Increases life and life regeneration.",
+                "Increases armor and attack speed.",
+                "Increases mana and mana regeneration.",
+                "Evasion for normal attacks, critical hits and partial avoidance.",
+                "Max hitpoints.",
+                "Hitpoint regeneration per second.",
+            }
+        }
+
+        for int = 1, buttonCount do
+            frame = BlzGetFrameByName("CustomUnitInfoButton"..int, context)
+            tooltip = BlzCreateFrameByType("SIMPLEFRAME", "", frame, "", context)
+            iconFrame = BlzGetFrameByName("CustomUnitInfoButtonIcon"..int, context)
+            textFrame = BlzGetFrameByName("CustomUnitInfoButtonText"..int, context)
+            BlzFrameSetTexture(iconFrame, FrameButtonData.texture[int], 0, false)
+            BlzTriggerRegisterFrameEvent(trigger, frame, FRAMEEVENT_CONTROL_CLICK)
+            BlzFrameSetTooltip(frame, tooltip)
+            BlzFrameSetVisible(tooltip, false)
+            RegisterTooltipUpdate(frame)
+            frameObject[int] = { Index = int, Icon = iconFrame, Text = textFrame, Button = frame, ToolTip = tooltip}
+            frameObject[frame] = frameObject[int]
+        end
+
+        for int = buttonCount + 1, maxButtons do
+            BlzFrameSetVisible(BlzGetFrameByName("CustomUnitInfoButton"..int, context), false)
+        end
+
+        local update = function(unit)
             local baseDamage = BlzGetUnitBaseDamage(unit, 0)
             local unitArmor = BlzGetUnitArmor(unit)
-            local armorReduction = (unitArmor * DefenseArmorConstant)/(1 + DefenseArmorConstant * unitArmor) * 100
             local stats = UnitStats[unit] ---@Type UnitStats
             local heroStrengthTotal = BlzGetUnitIntegerField(unit, UNIT_IF_STRENGTH_WITH_BONUS)
-            local heroStrengthBase = BlzGetUnitIntegerField(unit, UNIT_IF_STRENGTH_PERMANENT)
-            local heroStrengthBonus = heroStrengthTotal - heroStrengthBase
-            
             local heroAgilityTotal = BlzGetUnitIntegerField(unit, UNIT_IF_AGILITY_WITH_BONUS)
-            local heroAgilityBase = BlzGetUnitIntegerField(unit, UNIT_IF_AGILITY_PERMANENT)
-            local heroAgilityBonus = heroAgilityTotal - heroAgilityBase
-
             local heroIntelligenceTotal = BlzGetUnitIntegerField(unit, UNIT_IF_INTELLIGENCE_WITH_BONUS)
-            local heroIntelligenceBase = BlzGetUnitIntegerField(unit, UNIT_IF_INTELLIGENCE_PERMANENT)
-            local heroIntelligenceBonus = heroIntelligenceTotal - heroIntelligenceBase
-
             local maxHealth = BlzGetUnitMaxHP(unit)
             local healthRegenStr = heroStrengthTotal * StrRegenBonus
             local healthRegenUnit = BlzGetUnitRealField(unit, UNIT_RF_HIT_POINTS_REGENERATION_RATE)
             local healthRegenTotal = healthRegenUnit + healthRegenStr
 
-            local armorString = string.format("%%.0f\nReduction: %%.3f", unitArmor, armorReduction) .. "%%"
-
-            tooltipInfo[context][unit] = {
-                string.format("%%i", baseDamage),
-                armorString,
-                string.format("%%.0f", stats.physicalBlock),
-                string.format("Chance: %%.1f\nMean: %%.1f\nVariance: %%.1f", stats.critChance, stats.critMean, stats.critVariance),
-                string.format( "%%.0f",GetUnitMoveSpeed(unit)),
-                string.format("Total: |cffAA0000%%i|r\nBase: |cff161cc9%%i|r\nBonus: |cff16c91c%%i|r", heroStrengthTotal, heroStrengthBase, heroStrengthBonus),
-                string.format("Total: %%i\nBase: %%i\nBonus: %%i", heroAgilityTotal, heroAgilityBase, heroAgilityBonus),
-                string.format("Total: %%i\nBase: %%i\nBonus: %%i", heroIntelligenceTotal, heroIntelligenceBase, heroIntelligenceBonus),
-                string.format("Chance: %%.1f\nCrit: %%.1f\nPartial: %%.1f", stats.evasion, stats.evasionCrit, stats.evasionPartial),
-                string.format( "%%i", maxHealth),
-                string.format( "Total: %%.3f\nUnit: %%.3f\nStr: %%.3f", healthRegenTotal, healthRegenUnit, healthRegenStr)
-            }
-
-            -- BlzFrameGetText(BlzGetFrameByName("InfoPanelIconValue", 0)) is for the frame that has attack damage
-            -- BlzFrameGetText(BlzGetFrameByName("InfoPanelIconValue", 2)) is for the frame that has armor
-            -- BlzGetFrameByName("InfoPanelIconHeroStrengthValue", 6) is for strength
             BlzFrameSetText(frameObject[1].Text, string.format("%%i", baseDamage))
             BlzFrameSetText(frameObject[2].Text, string.format("%%.0f", unitArmor))
             BlzFrameSetText(frameObject[3].Text, string.format("%%.0f", stats.physicalBlock))
@@ -87,47 +115,89 @@ OnInit.final("PhysicalStatsPage", function()
             BlzFrameSetText(frameObject[9].Text, string.format("%%.1f", stats.evasion))
             BlzFrameSetText(frameObject[10].Text, string.format( "%%.1f", maxHealth))
             BlzFrameSetText(frameObject[11].Text, string.format( "%%.1f", healthRegenTotal))
-            BlzFrameSetText(frameObject[12].Text, string.format( "%%.1f", maxHealth))
-        end,
-        function(unit) return IsUnitType(unit, UNIT_TYPE_HERO) end)
-
-        for int = 1, buttonCount do
-            frame = BlzGetFrameByName("CustomUnitInfoButton"..int, context)
-            tooltip = BlzCreateFrameByType("SIMPLEFRAME", "", frame, "", context)
-            iconFrame = BlzGetFrameByName("CustomUnitInfoButtonIcon"..int, context)
-            textFrame = BlzGetFrameByName("CustomUnitInfoButtonText"..int, context)
-            BlzFrameSetTexture(iconFrame, Data[int][2], 0, false)
-            BlzTriggerRegisterFrameEvent(trigger, frame, FRAMEEVENT_CONTROL_CLICK)
-            BlzFrameSetTooltip(frame, tooltip)
-            BlzFrameSetVisible(tooltip, false)
-            UnitInfoPanelAddTooltipListener(tooltip, function(unit) 
-                return UnitInfoPanelTooltip(unit, int, context)
-            end)
-            frameObject[int] = { Index = int, Icon = iconFrame, Text = textFrame, Button = frame, ToolTip = tooltip}
-            frameObject[frame] = frameObject[int]
         end
-        BlzFrameSetVisible(BlzGetFrameByName("CustomUnitInfoButton12", 0), false)
 
+        local tooltipText = {
+            function(unit)
+                local baseDamage = BlzGetUnitBaseDamage(unit, 0)
+                return string.format("%%i", baseDamage)
+            end,
+            function(unit)
+                local unitArmor = BlzGetUnitArmor(unit)
+                local armorReduction = (unitArmor * DefenseArmorConstant)/(1 + DefenseArmorConstant * unitArmor) * 100
+                local armorString = string.format("%%.0f\nReduction: %%.3f", unitArmor, armorReduction) .. "%%"
+                return armorString
+            end,
+            function(unit)
+                local stats = UnitStats[unit] ---@Type UnitStats
+                return string.format("%%.0f", stats.physicalBlock)
+            end,
+            function(unit)
+                local stats = UnitStats[unit] ---@Type UnitStats
+                return string.format("Chance: %%.1f\nMean: %%.1f\nVariance: %%.1f", stats.critChance, stats.critMean, stats.critVariance)
+            end,
+            function(unit)
+                return string.format( "%%.0f",GetUnitMoveSpeed(unit))
+            end,
+            function(unit)
+                local heroStrengthTotal = BlzGetUnitIntegerField(unit, UNIT_IF_STRENGTH_WITH_BONUS)
+                local heroStrengthBase = BlzGetUnitIntegerField(unit, UNIT_IF_STRENGTH_PERMANENT)
+                local heroStrengthBonus = heroStrengthTotal - heroStrengthBase
+                return string.format("Total: |cffAA0000%%i|r\nBase: |cff161cc9%%i|r\nBonus: |cff16c91c%%i|r", heroStrengthTotal, heroStrengthBase, heroStrengthBonus)
+            end,
+            function(unit)
+                local heroAgilityTotal = BlzGetUnitIntegerField(unit, UNIT_IF_AGILITY_WITH_BONUS)
+                local heroAgilityBase = BlzGetUnitIntegerField(unit, UNIT_IF_AGILITY_PERMANENT)
+                local heroAgilityBonus = heroAgilityTotal - heroAgilityBase
+                return string.format("Total: %%i\nBase: %%i\nBonus: %%i", heroAgilityTotal, heroAgilityBase, heroAgilityBonus)
+            end,
+            function(unit)
+                local heroIntelligenceTotal = BlzGetUnitIntegerField(unit, UNIT_IF_INTELLIGENCE_WITH_BONUS)
+                local heroIntelligenceBase = BlzGetUnitIntegerField(unit, UNIT_IF_INTELLIGENCE_PERMANENT)
+                local heroIntelligenceBonus = heroIntelligenceTotal - heroIntelligenceBase
+                return string.format("Total: %%i\nBase: %%i\nBonus: %%i", heroIntelligenceTotal, heroIntelligenceBase, heroIntelligenceBonus)
+            end,
+            function(unit)
+                local stats = UnitStats[unit] ---@Type UnitStats
+                return string.format("Chance: %%.1f\nCrit: %%.1f\nPartial: %%.1f", stats.evasion, stats.evasionCrit, stats.evasionPartial)
+            end,
+            function(unit)
+                local maxHealth = BlzGetUnitMaxHP(unit)
+                return string.format( "%%i", maxHealth)
+            end,
+            function(unit)
+                local heroStrengthTotal = BlzGetUnitIntegerField(unit, UNIT_IF_STRENGTH_WITH_BONUS)
+                local healthRegenStr = heroStrengthTotal * StrRegenBonus
+                local healthRegenUnit = BlzGetUnitRealField(unit, UNIT_RF_HIT_POINTS_REGENERATION_RATE)
+                local healthRegenTotal = healthRegenUnit + healthRegenStr
+                return string.format( "Total: %%.3f\nUnit: %%.3f\nStr: %%.3f", healthRegenTotal, healthRegenUnit, healthRegenStr)
+            end,
+        }
+
+        AddUnitInfoPanelFrame(parent,
+        update,
+        UNIT_TYPE_HERO,
+        function(unit)
+            if IsUnitType(unit, UNIT_TYPE_HERO) then
+                return UNIT_TYPE_HERO
+            end
+
+            return nil
+        end,
+        function(unit, index)
+            
+            return CreateUnitInfoPanelTooltip(
+                FrameButtonData.field[index] .. ":",
+                tooltipText[index](unit) .. '\n\n' .. FrameButtonData.description[index]
+            )
+        end,
+        buttonCount,
+        frameObject)
     end
-
-    Data = {
-        {"Damage: ", "ReplaceableTextures\\CommandButtons\\BTNSteelMelee", "Basic attack physical damage."},
-        {"Armor: ", "ReplaceableTextures\\CommandButtons\\BTNHumanArmorUpOne", "Reduces physical damage by a percentage."},
-        {"Block: ", "ReplaceableTextures\\CommandButtons\\BTNThickFur", "Reduces physical damage by the specified amount."},
-        {"Crit: ", "ReplaceableTextures\\CommandButtons\\BTNCriticalStrike","Crit chance, mean and variance for a gaussian distribution."},
-        {"Speed: ", "ReplaceableTextures\\CommandButtons\\BTNBootsOfSpeed", "Current move speed."},
-        {"Str: ", "ReplaceableTextures\\CommandButtons\\BTNGauntletsOfOgrePower", "Increases life and life regeneration."},
-        {"Agi: ", "ReplaceableTextures\\CommandButtons\\BTNSlippersOfAgility", "Increases armor and attack speed."},
-        {"Int: ", "ReplaceableTextures\\CommandButtons\\BTNMantleOfIntelligence", "Increases mana and mana regeneration."},
-        {"Evasion: ", "ReplaceableTextures\\CommandButtons\\BTNEvasion", "Evasion for normal attacks, critical hits and partial avoidance."},
-        {"HP: ", "ReplaceableTextures\\CommandButtons\\BTNStatUp","Max hitpoints."},
-        {"HP/s: ", "ReplaceableTextures\\CommandButtons\\BTNRegenerate","Hitpoint regeneration per second."},
-        {"Ausweichen: ", "ReplaceableTextures\\CommandButtons\\BTNEvasion",""}
-    }
 
     trigger = CreateTrigger()
     TriggerAddAction(trigger, function()
-        local unit = UnitInfoPanelGetUnit(GetTriggerPlayer())
+        local unit = GetSelectedUnit(GetTriggerPlayer())
         local buttonIndex = frameObject[BlzGetTriggerFrame()].Index
         FOI = frameObject[BlzGetTriggerFrame()].Icon
         print("Custom Stat Panel")
