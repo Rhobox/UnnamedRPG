@@ -16,7 +16,7 @@ OnInit.final("UnitInfoPanels", function()
         local newCondition
         page = page or currentPage
         for i, v in ipairs(panels[page].condition) do
-            newCondition = v(currentUnit)
+            newCondition = v(CurrentUnit)
             if newCondition ~= nil then
                 return newCondition
             end
@@ -28,7 +28,7 @@ OnInit.final("UnitInfoPanels", function()
         local newCondition
         page = page or currentPage
         for i, v in ipairs(panels[currentPage].condition) do
-            newCondition = v(currentUnit)
+            newCondition = v(CurrentUnit)
             if newCondition ~= nil then
                 condition = newCondition
                 break
@@ -52,7 +52,7 @@ OnInit.final("UnitInfoPanels", function()
                 BlzFrameSetVisible(currentPage, false)
                 currentPage = storedPage
                 updateCondition()
-                panels[currentPage].update[condition](currentUnit)
+                panels[currentPage].update[condition](CurrentUnit)
                 BlzFrameSetVisible(currentPage, true)
                 storedPage = nil
                 return true
@@ -63,7 +63,7 @@ OnInit.final("UnitInfoPanels", function()
             end
         else
             if panels[currentPage].update[condition] then
-                panels[currentPage].update[condition](currentUnit)
+                panels[currentPage].update[condition](CurrentUnit)
                 return true
             else
                 storedPage = currentPage
@@ -85,7 +85,7 @@ OnInit.final("UnitInfoPanels", function()
             BlzFrameSetVisible(tooltipBox, true)
             local frameObject = panels[currentPage].frameObject[condition][frame]
             local index = frameObject.Index
-            local tooltipText = panels[currentPage].tooltipUpdate[condition](currentUnit, index)
+            local tooltipText = panels[currentPage].tooltipUpdate[condition](CurrentUnit, index)
             BlzFrameSetText(tooltipTextFrame, tooltipText)
         end
     end)
@@ -128,10 +128,9 @@ OnInit.final("UnitInfoPanels", function()
         player = player or GetLocalPlayer()
         local group = CreateGroup()
         GroupEnumUnitsSelected(group, player, nil)
-        currentUnit = FirstOfGroup(group)
+        CurrentUnit = FirstOfGroup(group)
         DestroyGroup(group)
         isValidUnitPage()
-        return currentUnit
     end
 
     function RegisterTooltipUpdate(frame)
@@ -254,7 +253,7 @@ OnInit.final("UnitInfoPanels", function()
 
                     if panels[currentPage].update then
                         if panels[currentPage].update[localCondition] then
-                            panels[currentPage].update[localCondition](currentUnit)
+                            panels[currentPage].update[localCondition](CurrentUnit)
                         end
                     end
 
