@@ -1,7 +1,8 @@
 if Debug then Debug.beginFile "UnitInfoPanelsDebug" end
 OnInit.final("UnitInfoPanels", function()
-    panels = {}
+    local panels = {}
     local context = 1000
+    local firstPage, currentPage, lastPage
     local defaultCondition = true
     local tooltipBox, tooltipTextFrame
     local unitInfo, parent, pageUp, pageDown
@@ -11,7 +12,8 @@ OnInit.final("UnitInfoPanels", function()
     local tooltipTrigger = CreateTrigger()
     local nextTrigger = CreateTrigger()
     local prevTrigger = CreateTrigger()
-    storedPage = nil
+    local storedPage = nil
+    local condition
 
     local function getCondition(page)
         local newCondition
@@ -46,7 +48,8 @@ OnInit.final("UnitInfoPanels", function()
         if currentPage == firstPage and storedPage == nil then
             return true
         end
-        storedCondition = getCondition(storedPage)
+        
+        local storedCondition = getCondition(storedPage)
         if storedPage ~= nil and storedPage ~= currentPage then
             if panels[storedPage].update[storedCondition] then
                 BlzFrameSetVisible(currentPage, false)
